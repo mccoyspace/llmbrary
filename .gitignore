@@ -1,0 +1,48 @@
+# Runtime artifacts
+processing_log.json
+inbox_manifest.json
+enrichment_queue.json
+new_extractions.json
+
+# Library catalog data (personal data)
+catalog.json
+extracted_titles.json
+unreadable.json
+
+# Generated context files (personal data)
+CONTEXT.md
+CONTEXT_COMPACT.md
+CONTEXT_OVERVIEW.md
+
+# Generated wiki pages (synthesized personal data)
+wiki/
+
+# Scripts with personal data
+generate_context.py
+
+# Python
+__pycache__/
+*.pyc
+
+# Claude Code local settings
+.claude/
+
+# macOS
+.DS_Store
+
+# Node
+node_modules/
+
+# Source photos (not distributed per README)
+photos/processed/*.jpeg
+photos/processed/*.jpg
+photos/processed/*.png
+photos/processed/*.heic
+photos/
+
+# Personal text files
+films.txt
+wiki-kb-design.md
+
+# Publish script (local-only tooling)
+scripts/publish.py

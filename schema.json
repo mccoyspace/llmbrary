@@ -1,0 +1,132 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Media Catalog",
+  "description": "Catalog of books, films, and music in a personal collection with intellectual relationships",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "title": "Catalog Entry",
+    "required": [
+      "title",
+      "year",
+      "synopsis",
+      "themes"
+    ],
+    "properties": {
+      "title": {
+        "type": "string",
+        "description": "Title of the work"
+      },
+      "media_type": {
+        "type": "string",
+        "enum": [
+          "book",
+          "film",
+          "music"
+        ],
+        "default": "book",
+        "description": "Type of media. Defaults to 'book' if omitted for backward compatibility."
+      },
+      "author": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "Author or editor name(s) (books)"
+      },
+      "director": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "Director name(s) (films)"
+      },
+      "artist": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "Artist or band name (music)"
+      },
+      "album": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "Album title (music — when title is used for the work name)"
+      },
+      "cast": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Cast members (films, optional)"
+      },
+      "label": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "Record label (music, optional)"
+      },
+      "publisher": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "Publisher (books, optional)"
+      },
+      "format": {
+        "type": [
+          "string",
+          "null"
+        ],
+        "description": "Physical/digital format: books (hardcover/paperback), films (DVD/Blu-ray/digital), music (CD/vinyl/digital)"
+      },
+      "year": {
+        "type": [
+          "integer",
+          "null"
+        ],
+        "description": "Publication/release year"
+      },
+      "synopsis": {
+        "type": "string",
+        "description": "Description and context for the work"
+      },
+      "themes": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Key themes and subjects"
+      },
+      "source_image": {
+        "type": "string",
+        "description": "Reference image source"
+      },
+      "confidence": {
+        "type": "string",
+        "enum": [
+          "high",
+          "medium",
+          "low"
+        ],
+        "description": "Confidence level in catalog entry accuracy"
+      },
+      "needs_review": {
+        "type": "boolean",
+        "description": "Whether entry needs review or verification"
+      },
+      "in_conversation_with": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Titles of related works in the catalog (cross-media connections supported)",
+        "maxItems": 5
+      }
+    },
+    "additionalProperties": false
+  }
+}
