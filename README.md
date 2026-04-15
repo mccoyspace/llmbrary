@@ -2,7 +2,7 @@
 
 Turn a physical media collection into a portable knowledge base for LLMs.
 
-This repository creates a structured catalog of books, films, and music extracted from photographs of shelves and imported from text lists. The catalog is designed to be loaded into LLM context windows, giving AI assistants awareness of the intellectual background behind a conversation — the books that shaped how you think, the films that informed your visual language, the music that soundtracks your practice.
+This repository creates a structured catalog of books, films, and music extracted from photographs of the items (on shelves or individually) or imported from text lists of titles. The catalog is designed to be loaded into LLM context windows, giving AI assistants awareness of the intellectual background behind a conversation — the books that shaped how you think, the films that informed your visual language, the music that soundtracks your practice.
 
 ## Why
 
