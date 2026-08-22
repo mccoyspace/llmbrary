@@ -1,0 +1,188 @@
+#!/usr/bin/env python3
+"""
+file_wiki.py — Save a new wiki page source and update the compiled index.
+
+Accepts a title and markdown content, writes a new source page to wiki_src/
+(with catalog citations as [[Title]] markers), and recompiles wiki/ via
+compile_wiki.py so the page appears alongside the rest with live citations.
+
+Usage:
+    # From a content file
+    python3 scripts/file_wiki.py "Surveillance Across Media" content.md
+
+    # From stdin
+    echo "# Page content..." | python3 scripts/file_wiki.py "Surveillance Across Media" --stdin
+
+    # Dry run (preview filename and index entry without writing)
+    python3 scripts/file_wiki.py "Surveillance Across Media" content.md --dry-run
+
+    # Overwrite an existing page
+    python3 scripts/file_wiki.py "Surveillance Across Media" content.md --force
+
+Stdlib-only. No external dependencies.
+"""
+
+import argparse
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+SRC_DIR = REPO_ROOT / "wiki_src"
+WIKI_DIR = REPO_ROOT / "wiki"
+INDEX_PATH = WIKI_DIR / "INDEX.md"
+COMPILE_SCRIPT = REPO_ROOT / "scripts" / "compile_wiki.py"
+
+
+def slug(title: str) -> str:
+    """Convert a page title to a filename-safe slug."""
+    s = title.lower().strip()
+    s = re.sub(r"[^a-z0-9\s-]", "", s)
+    s = re.sub(r"[\s]+", "-", s)
+    s = re.sub(r"-+", "-", s)
+    return s.strip("-")
+
+
+def extract_summary(content: str, max_words: int = 25) -> str:
+    """Extract first sentence of content for the INDEX.md blurb.
+
+    Strips markdown headers, then takes the first sentence or up to
+    max_words from the first paragraph.
+    """
+    lines = []
+    for line in content.strip().splitlines():
+        stripped = line.strip()
+        # skip blank lines and headers
+        if not stripped or stripped.startswith("#"):
+            continue
+        lines.append(stripped)
+        if len(lines) >= 3:
+            break
+
+    text = " ".join(lines)
+    # take first sentence
+    match = re.match(r"(.+?[.!?])\s", text)
+    if match:
+        sentence = match.group(1)
+        words = sentence.split()
+        if len(words) <= max_words + 10:
+            return sentence
+        return " ".join(words[:max_words]) + "..."
+
+    words = text.split()
+    if len(words) > max_words:
+        return " ".join(words[:max_words]) + "..."
+    return text
+
+
+def recompile(dry_run: bool = False) -> bool:
+    """Recompile wiki/ from wiki_src/ so the new page is included.
+
+    Returns True on success. A nonzero compiler exit means unresolved
+    citations were found — the pages are still written, but the caller
+    should surface the warning.
+    """
+    if dry_run:
+        return True
+    result = subprocess.run(
+        [sys.executable, str(COMPILE_SCRIPT)],
+        capture_output=True, text=True,
+    )
+    if result.stdout.strip():
+        print(result.stdout.strip())
+    if result.returncode != 0:
+        print("WARNING: compile reported unresolved citations:",
+              file=sys.stderr)
+        if result.stderr.strip():
+            print(result.stderr.strip(), file=sys.stderr)
+        return False
+    return True
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Save a wiki page source and update the compiled index."
+    )
+    parser.add_argument("title", help="Page title (used for filename and index entry)")
+    parser.add_argument(
+        "content_file",
+        nargs="?",
+        default=None,
+        help="Path to markdown file with page content",
+    )
+    parser.add_argument(
+        "--stdin",
+        action="store_true",
+        help="Read content from stdin instead of a file",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview what would be written without making changes",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Overwrite existing page if it exists",
+    )
+
+    args = parser.parse_args()
+
+    # Read content
+    if args.stdin:
+        content = sys.stdin.read()
+    elif args.content_file:
+        content_path = Path(args.content_file)
+        if not content_path.exists():
+            print(f"Error: content file not found: {args.content_file}", file=sys.stderr)
+            sys.exit(1)
+        content = content_path.read_text()
+    else:
+        print("Error: provide a content file or use --stdin", file=sys.stderr)
+        sys.exit(1)
+
+    if not content.strip():
+        print("Error: content is empty", file=sys.stderr)
+        sys.exit(1)
+
+    # Ensure a single H1 matching the given title (compiler reads it for INDEX).
+    if not re.match(r"^\s*#\s+", content):
+        content = f"# {args.title}\n\n" + content
+
+    filename = slug(args.title) + ".md"
+    filepath = SRC_DIR / filename
+
+    # Summary preview comes from the raw content; the compiled INDEX blurb is
+    # regenerated by compile_wiki.py from resolved output.
+    summary = extract_summary(content)
+
+    if args.dry_run:
+        print(f"Would write: wiki_src/{filename} ({len(content)} chars)")
+        print(f"Would recompile wiki/ + INDEX.md")
+        print(f"Index blurb: {summary}")
+        return
+
+    # Check for existing page
+    if filepath.exists() and not args.force:
+        print(
+            f"Error: wiki_src/{filename} already exists. Use --force to overwrite.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    # Ensure source directory exists
+    SRC_DIR.mkdir(exist_ok=True)
+
+    # Write the page
+    filepath.write_text(content if content.endswith("\n") else content + "\n")
+    print(f"Wrote wiki_src/{filename} ({len(content)} chars)")
+
+    # Recompile all sources into wiki/ (updates INDEX.md too)
+    ok = recompile()
+    if not ok:
+        sys.exit(2)
+
+
+if __name__ == "__main__":
+    main()
